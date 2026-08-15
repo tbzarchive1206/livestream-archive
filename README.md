@@ -24,4 +24,6 @@ W **Settings → Pages → Build and deployment** ustaw **Source: GitHub Actions
 
 Miniatury YouTube są generowane automatycznie z adresu filmu. Własny adres można podać w kolumnie `Thumbnail`/`Thumbnail URL`, jeśli arkusz taką wartość zawiera.
 
+Filmy YouTube otwierają się w odtwarzaczu bezpośrednio na stronie. Interfejs archiwum jest dostępny wyłącznie w języku angielskim. Filtry `Q` i `NEW` rozpoznają również odpowiednio nazwy `Changmin` i `Chanhee` zapisane w arkuszu.
+
 Nie edytuj ręcznie `data/livestreams.js`, ponieważ kolejne uruchomienie workflow zastąpi zmiany.

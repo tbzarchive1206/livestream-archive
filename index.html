@@ -6,12 +6,14 @@
   <meta name="theme-color" content="#1746d1">
   <title>Livestream Archive — THE BOYZ ARCHIVE</title>
   <meta name="description" content="Fan-made archive of THE BOYZ livestreams from 2017 onwards.">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main id="top">
     <header class="masthead">
-      <div class="utility"><a class="brand" href="../the-boyz-archive/index.html">THE BOYZ / FAN ARCHIVE</a><nav><button class="lang-toggle active" id="langToggle" type="button" aria-label="Switch language">EN</button><span>/</span><a class="twitter-link" href="https://x.com/tbzarchive1206_" target="_blank" rel="noopener noreferrer" aria-label="THE BOYZ Archive on Twitter">TWITTER ↗</a></nav></div>
+      <div class="utility"><a class="brand" href="../the-boyz-archive/index.html">THE BOYZ / FAN ARCHIVE</a><nav><a class="twitter-link" href="https://x.com/tbzarchive1206_" target="_blank" rel="noopener noreferrer" aria-label="THE BOYZ Archive on Twitter">TWITTER ↗</a></nav></div>
       <h1><span class="solid">LIVESTREAMS</span><span class="outline">ARCHIVE</span></h1>
       <div class="stats"><p><strong id="totalCount">1,562</strong> STREAMS</p><i></i><p>2017—<strong id="lastYear">2026</strong></p><i></i><p>UPDATED <strong id="updatedDate">2026</strong></p></div>
     </header>
@@ -36,6 +38,12 @@
 
     <footer><a href="../the-boyz-archive/index.html">← MAIN ARCHIVE</a><a href="#top">BACK TO TOP ↑</a></footer>
   </main>
+  <dialog class="player-dialog" id="playerDialog" aria-labelledby="playerTitle">
+    <div class="player-shell">
+      <header class="player-head"><div><span>WATCH LIVESTREAM</span><h2 id="playerTitle">LIVESTREAM</h2></div><button id="closePlayer" type="button" aria-label="Close video player">×</button></header>
+      <div class="player-frame"><iframe id="youtubePlayer" title="YouTube livestream player" src="about:blank" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+    </div>
+  </dialog>
   <script src="data/livestreams.js"></script>
   <script src="app.js"></script>
 </body>

@@ -1,29 +1,216 @@
 (() => {
-  const all = Array.isArray(window.LIVESTREAMS) ? [...window.LIVESTREAMS].sort((a,b) => String(b.date).localeCompare(String(a.date)) || String(b.id).localeCompare(String(a.id))) : [];
-  const $ = (s) => document.querySelector(s);
-  const copy = {
-    en:{brand:'THE BOYZ / FAN ARCHIVE',solid:'LIVESTREAMS',outline:'ARCHIVE',streams:'STREAMS',updated:'UPDATED',search:'SEARCH TITLES, MEMBERS...',filters:'FILTERS',year:'YEAR',member:'MEMBER',platform:'PLATFORM',allYears:'ALL YEARS',allMembers:'ALL MEMBERS',allPlatforms:'ALL PLATFORMS',allTab:'ALL',resultsAll:'ALL YEARS',stream:'STREAM',streamsResult:'STREAMS',membersLabel:'MEMBERS',platformLabel:'PLATFORM',watch:'WATCH →',copyLink:'COPY LINK',loadMore:'LOAD MORE ↓',noResults:'NO RESULTS',tryChange:'Try changing the search or filters.',mainArchive:'← MAIN ARCHIVE',backTop:'BACK TO TOP ↑',pageTitle:'Livestream Archive — THE BOYZ ARCHIVE',switchLabel:'Switch to Korean'},
-    ko:{brand:'더보이즈 / 팬 아카이브',solid:'라이브스트림',outline:'아카이브',streams:'라이브',updated:'업데이트',search:'제목, 멤버 검색...',filters:'필터',year:'연도',member:'멤버',platform:'플랫폼',allYears:'전체 연도',allMembers:'전체 멤버',allPlatforms:'전체 플랫폼',allTab:'전체',resultsAll:'전체 연도',stream:'라이브',streamsResult:'라이브',membersLabel:'멤버',platformLabel:'플랫폼',watch:'보기 →',copyLink:'링크 복사',loadMore:'더 보기 ↓',noResults:'검색 결과 없음',tryChange:'검색어나 필터를 변경해 보세요.',mainArchive:'← 메인 아카이브',backTop:'맨 위로 ↑',pageTitle:'라이브스트림 아카이브 — 더보이즈 아카이브',switchLabel:'영어로 전환'}
+  const all = Array.isArray(window.LIVESTREAMS)
+    ? [...window.LIVESTREAMS].sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.id).localeCompare(String(a.id)))
+    : [];
+  const $ = (selector) => document.querySelector(selector);
+  const escapeHtml = (value = "") => String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
+  const normalize = (value = "") => String(value).toLocaleLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+  const MEMBER_OPTIONS = [
+    { value: "Sangyeon", label: "SANGYEON", aliases: ["sangyeon"] },
+    { value: "Jacob", label: "JACOB", aliases: ["jacob"] },
+    { value: "Younghoon", label: "YOUNGHOON", aliases: ["younghoon"] },
+    { value: "Hyunjae", label: "HYUNJAE", aliases: ["hyunjae"] },
+    { value: "Juyeon", label: "JUYEON", aliases: ["juyeon"] },
+    { value: "Kevin", label: "KEVIN", aliases: ["kevin"] },
+    { value: "Q", label: "Q", aliases: ["q", "changmin"] },
+    { value: "Sunwoo", label: "SUNWOO", aliases: ["sunwoo"] },
+    { value: "Eric", label: "ERIC", aliases: ["eric"] },
+    { value: "Hwall", label: "HWALL (2017 - 2019)", aliases: ["hwall", "hur hyunjun", "hyunjun"] },
+    { value: "Haknyeon", label: "HAKNYEON (2017 - 2025)", aliases: ["haknyeon", "ju haknyeon"] },
+    { value: "New", label: "NEW (2017 - 2026)", aliases: ["new", "chanhee", "choi chanhee"] }
+  ];
+
+  const els = {
+    cards: $("#cards"),
+    search: $("#search"),
+    year: $("#yearFilter"),
+    member: $("#memberFilter"),
+    platform: $("#platformFilter"),
+    tabs: $("#yearTabs"),
+    label: $("#resultsLabel"),
+    empty: $("#empty"),
+    more: $("#loadMore"),
+    grid: $("#gridView"),
+    list: $("#listView"),
+    filterRow: $("#filterRow"),
+    filterToggle: $("#filtersToggle"),
+    dialog: $("#playerDialog"),
+    player: $("#youtubePlayer"),
+    playerTitle: $("#playerTitle")
   };
-  let savedLanguage='en'; try{savedLanguage=localStorage.getItem('tbz-archive-language')==='ko'?'ko':'en'}catch{}
-  const els={cards:$('#cards'),search:$('#search'),year:$('#yearFilter'),member:$('#memberFilter'),platform:$('#platformFilter'),tabs:$('#yearTabs'),label:$('#resultsLabel'),empty:$('#empty'),more:$('#loadMore'),grid:$('#gridView'),list:$('#listView'),filterRow:$('#filterRow'),filterToggle:$('#filtersToggle'),lang:$('#langToggle')};
-  const latestYear=Math.max(...all.map(x=>Number(x.year)));
-  let state={query:'',year:String(latestYear),member:'all',platform:'all',limit:24,view:'grid',lang:savedLanguage};
-  const t=(key)=>copy[state.lang][key];
-  const escapeHtml=(value='')=>String(value).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-  const cleanMembers=(value='')=>String(value).split(',').map(x=>x.trim()).filter(Boolean);
-  const years=[...new Set(all.map(x=>Number(x.year)))].sort((a,b)=>b-a);
-  const memberOrder=['Sangyeon','Jacob','Younghoon','Hyunjae','Juyeon','Kevin','New','Q','Sunwoo','Eric'];
-  const members=memberOrder.filter(name=>all.some(x=>cleanMembers(x.members).some(m=>m.toLowerCase()===name.toLowerCase())));
-  const platforms=[...new Set(all.map(x=>x.platform).filter(x=>x&&x!=='Not specified'))].sort();
-  const addOptions=(select,values)=>values.forEach(v=>select.insertAdjacentHTML('beforeend',`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`));
-  addOptions(els.year,years); members.forEach(name=>els.member.insertAdjacentHTML('beforeend',`<option value="${escapeHtml(name)}">${name==='New'?'NEW':escapeHtml(name)}</option>`)); addOptions(els.platform,platforms); els.year.value=state.year;
-  function buildTabs(){els.tabs.innerHTML=years.map(y=>`<button type="button" data-year="${y}" class="${String(y)===state.year?'selected':''}">${y}</button>`).join('')+`<button type="button" data-year="all">${t('allTab')}</button>`;}
-  function updateStats(){const newest=all.map(x=>x.date).filter(Boolean).sort().at(-1);const updated=newest?new Date(newest+'T12:00:00').toLocaleDateString(state.lang==='ko'?'ko-KR':'en-US',{month:'short',year:'numeric'}).toUpperCase():String(latestYear);const stats=document.querySelectorAll('.stats p');stats[0].innerHTML=`<strong id="totalCount">${all.length.toLocaleString(state.lang==='ko'?'ko-KR':'en-US')}</strong> ${t('streams')}`;stats[1].innerHTML=`2017—<strong id="lastYear">${latestYear}</strong>`;stats[2].innerHTML=`${t('updated')} <strong id="updatedDate">${updated}</strong>`;}
-  function filtered(){const q=state.query.toLocaleLowerCase();return all.filter(x=>{const matchesQ=!q||`${x.title} ${x.members}`.toLocaleLowerCase().includes(q);const matchesYear=state.year==='all'||String(x.year)===state.year;const matchesMember=state.member==='all'||cleanMembers(x.members).some(m=>m.toLowerCase()===state.member.toLowerCase())||/^all members$/i.test(x.members);const matchesPlatform=state.platform==='all'||x.platform===state.platform;return matchesQ&&matchesYear&&matchesMember&&matchesPlatform;});}
-  function dateLabel(value){if(!value)return state.lang==='ko'?'날짜 미상':'DATE UNKNOWN';const d=new Date(value+'T12:00:00');return Number.isNaN(d.valueOf())?escapeHtml(value):d.toLocaleDateString(state.lang==='ko'?'ko-KR':'en-US',state.lang==='ko'?{year:'numeric',month:'long',day:'numeric'}:{month:'short',day:'2-digit',year:'numeric'}).toUpperCase();}
-  function card(x){const watch=x.watch?`<a class="watch" href="${escapeHtml(x.watch)}" target="_blank" rel="noreferrer">${t('watch')}</a>`:`<span class="watch no-link">${t('watch')}</span>`;const image=x.thumbnail?`<img src="${escapeHtml(x.thumbnail)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:'';return `<article class="card"><a class="thumb" ${x.watch?`href="${escapeHtml(x.watch)}" target="_blank" rel="noreferrer"`:''}>${image}</a><div class="card-info"><span class="date">${dateLabel(x.date)}</span><h2>${escapeHtml(x.title)}</h2><div class="meta"><span>${t('membersLabel')}</span><b>${escapeHtml(x.members)}</b><span>${t('platformLabel')}</span><b>${escapeHtml(x.platform)}</b></div><div class="actions">${watch}<button type="button" class="copy" data-link="${escapeHtml(x.watch||'')}">${t('copyLink')}</button></div></div></article>`;}
-  function render(reset=true){if(reset)state.limit=24;const list=filtered();const shown=list.slice(0,state.limit);els.cards.innerHTML=shown.map(card).join('');els.empty.hidden=list.length!==0;els.more.hidden=shown.length>=list.length;els.label.textContent=`${state.year==='all'?t('resultsAll'):state.year} · ${list.length.toLocaleString(state.lang==='ko'?'ko-KR':'en-US')} ${list.length===1?t('stream'):t('streamsResult')}`;els.tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.dataset.year===state.year));els.year.value=state.year;}
-  function applyLanguage(){document.documentElement.lang=state.lang==='ko'?'ko':'en';document.title=t('pageTitle');document.querySelector('.brand').textContent=t('brand');document.querySelector('.masthead h1 .solid').textContent=t('solid');document.querySelector('.masthead h1 .outline').textContent=t('outline');els.lang.textContent=state.lang==='ko'?'KOR':'EN';els.lang.setAttribute('aria-label',t('switchLabel'));els.search.placeholder=t('search');const labels=els.filterRow.querySelectorAll('label');labels[0].firstChild.nodeValue=t('year');labels[1].firstChild.nodeValue=t('member');labels[2].firstChild.nodeValue=t('platform');els.year.options[0].textContent=t('allYears');els.member.options[0].textContent=t('allMembers');els.platform.options[0].textContent=t('allPlatforms');els.filterToggle.innerHTML=`<span>☷</span> ${t('filters')} <b>${els.filterRow.classList.contains('closed')?'⌄':'⌃'}</b>`;els.more.textContent=t('loadMore');els.empty.querySelector('span').textContent=t('noResults');els.empty.querySelector('p').textContent=t('tryChange');const footer=document.querySelectorAll('footer a');footer[0].textContent=t('mainArchive');footer[1].textContent=t('backTop');updateStats();buildTabs();render(false);}
-  let searchTimer;els.search.addEventListener('input',e=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.query=e.target.value.trim();render();},120)});els.year.addEventListener('change',e=>{state.year=e.target.value;render()});els.member.addEventListener('change',e=>{state.member=e.target.value;render()});els.platform.addEventListener('change',e=>{state.platform=e.target.value;render()});els.tabs.addEventListener('click',e=>{const b=e.target.closest('button[data-year]');if(!b)return;state.year=b.dataset.year;render();});els.more.addEventListener('click',()=>{state.limit+=24;render(false)});els.cards.addEventListener('click',async e=>{const b=e.target.closest('.copy');if(!b)return;const link=b.dataset.link;if(!link)return;try{await navigator.clipboard.writeText(link);b.classList.add('done');setTimeout(()=>b.classList.remove('done'),1500)}catch{prompt(state.lang==='ko'?'이 링크를 복사하세요:':'Copy this link:',link)}});function setView(view){state.view=view;els.cards.classList.toggle('list-view',view==='list');els.grid.classList.toggle('selected',view==='grid');els.list.classList.toggle('selected',view==='list')}els.grid.addEventListener('click',()=>setView('grid'));els.list.addEventListener('click',()=>setView('list'));els.filterToggle.addEventListener('click',()=>{const closed=els.filterRow.classList.toggle('closed');els.filterToggle.setAttribute('aria-expanded',String(!closed));els.filterToggle.querySelector('b').textContent=closed?'⌄':'⌃'});els.lang.addEventListener('click',()=>{state.lang=state.lang==='en'?'ko':'en';try{localStorage.setItem('tbz-archive-language',state.lang)}catch{}applyLanguage()});applyLanguage();
+
+  const years = [...new Set(all.map((item) => Number(item.year)).filter(Number.isFinite))].sort((a, b) => b - a);
+  const latestYear = years[0] || new Date().getFullYear();
+  const platforms = [...new Set(all.map((item) => item.platform).filter((platform) => platform && platform !== "Not specified"))].sort();
+  const state = { query: "", year: String(latestYear), member: "all", platform: "all", limit: 24, view: "grid" };
+
+  function addOptions(select, values) {
+    values.forEach((value) => select.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`));
+  }
+
+  addOptions(els.year, years);
+  MEMBER_OPTIONS.forEach((member) => els.member.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(member.value)}">${escapeHtml(member.label)}</option>`));
+  addOptions(els.platform, platforms);
+  els.year.value = state.year;
+
+  function buildTabs() {
+    els.tabs.innerHTML = years.map((year) => `<button type="button" data-year="${year}" class="${String(year) === state.year ? "selected" : ""}">${year}</button>`).join("")
+      + `<button type="button" data-year="all" class="${state.year === "all" ? "selected" : ""}">ALL</button>`;
+  }
+
+  function updateStats() {
+    const newest = all.map((item) => item.date).filter(Boolean).sort().at(-1);
+    const updated = newest
+      ? new Date(`${newest}T12:00:00`).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()
+      : String(latestYear);
+    const stats = document.querySelectorAll(".stats p");
+    stats[0].innerHTML = `<strong id="totalCount">${all.length.toLocaleString("en-US")}</strong> STREAMS`;
+    stats[1].innerHTML = `2017—<strong id="lastYear">${latestYear}</strong>`;
+    stats[2].innerHTML = `UPDATED <strong id="updatedDate">${updated}</strong>`;
+  }
+
+  function memberMatches(value, selectedMember) {
+    if (selectedMember === "all") return true;
+    if (/^all members$/i.test(String(value).trim())) return true;
+    const option = MEMBER_OPTIONS.find((member) => member.value === selectedMember);
+    if (!option) return false;
+    const normalizedValue = ` ${normalize(value)} `;
+    return option.aliases.some((alias) => normalizedValue.includes(` ${normalize(alias)} `));
+  }
+
+  function filtered() {
+    const query = state.query.toLocaleLowerCase();
+    return all.filter((item) => {
+      const matchesQuery = !query || `${item.title} ${item.members}`.toLocaleLowerCase().includes(query);
+      const matchesYear = state.year === "all" || String(item.year) === state.year;
+      const matchesMember = memberMatches(item.members, state.member);
+      const matchesPlatform = state.platform === "all" || item.platform === state.platform;
+      return matchesQuery && matchesYear && matchesMember && matchesPlatform;
+    });
+  }
+
+  function dateLabel(value) {
+    if (!value) return "DATE UNKNOWN";
+    const date = new Date(`${value}T12:00:00`);
+    return Number.isNaN(date.valueOf())
+      ? escapeHtml(value)
+      : date.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase();
+  }
+
+  function youtubeId(value) {
+    if (!value) return "";
+    try {
+      const url = new URL(value);
+      const host = url.hostname.replace(/^www\./, "").toLocaleLowerCase();
+      let candidate = "";
+      if (host === "youtu.be") candidate = url.pathname.split("/").filter(Boolean)[0] || "";
+      else if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+        if (url.pathname === "/watch") candidate = url.searchParams.get("v") || "";
+        else candidate = url.pathname.match(/^\/(?:embed|shorts|live)\/([^/?#]+)/)?.[1] || "";
+      }
+      return /^[A-Za-z0-9_-]{6,20}$/.test(candidate) ? candidate : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function watchControl(item, videoId) {
+    if (videoId) return `<button type="button" class="watch play-video" data-video-id="${escapeHtml(videoId)}" data-video-title="${escapeHtml(item.title)}">WATCH →</button>`;
+    if (item.watch) return `<a class="watch" href="${escapeHtml(item.watch)}" target="_blank" rel="noreferrer">WATCH ↗</a>`;
+    return `<span class="watch no-link">WATCH →</span>`;
+  }
+
+  function thumbnailControl(item, videoId, image) {
+    if (videoId) return `<button type="button" class="thumb play-video" data-video-id="${escapeHtml(videoId)}" data-video-title="${escapeHtml(item.title)}" aria-label="Play ${escapeHtml(item.title)}">${image}</button>`;
+    if (item.watch) return `<a class="thumb" href="${escapeHtml(item.watch)}" target="_blank" rel="noreferrer" aria-label="Open ${escapeHtml(item.title)}">${image}</a>`;
+    return `<div class="thumb">${image}</div>`;
+  }
+
+  function card(item) {
+    const videoId = youtubeId(item.watch);
+    const image = item.thumbnail ? `<img src="${escapeHtml(item.thumbnail)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : "";
+    return `<article class="card">${thumbnailControl(item, videoId, image)}<div class="card-info"><span class="date">${dateLabel(item.date)}</span><h2>${escapeHtml(item.title)}</h2><div class="meta"><span>MEMBERS</span><b>${escapeHtml(item.members)}</b><span>PLATFORM</span><b>${escapeHtml(item.platform)}</b></div><div class="actions">${watchControl(item, videoId)}<button type="button" class="copy" data-link="${escapeHtml(item.watch || "")}">COPY LINK</button></div></div></article>`;
+  }
+
+  function render(reset = true) {
+    if (reset) state.limit = 24;
+    const list = filtered();
+    const shown = list.slice(0, state.limit);
+    els.cards.innerHTML = shown.map(card).join("");
+    els.empty.hidden = list.length !== 0;
+    els.more.hidden = shown.length >= list.length;
+    els.label.textContent = `${state.year === "all" ? "ALL YEARS" : state.year} · ${list.length.toLocaleString("en-US")} ${list.length === 1 ? "STREAM" : "STREAMS"}`;
+    els.tabs.querySelectorAll("button").forEach((button) => button.classList.toggle("selected", button.dataset.year === state.year));
+    els.year.value = state.year;
+  }
+
+  function openPlayer(videoId, title) {
+    els.playerTitle.textContent = title || "LIVESTREAM";
+    els.player.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
+    els.dialog.showModal();
+    document.body.classList.add("player-open");
+  }
+
+  function closePlayer() {
+    els.dialog.close();
+  }
+
+  let searchTimer;
+  els.search.addEventListener("input", (event) => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { state.query = event.target.value.trim(); render(); }, 120);
+  });
+  els.year.addEventListener("change", (event) => { state.year = event.target.value; render(); });
+  els.member.addEventListener("change", (event) => { state.member = event.target.value; render(); });
+  els.platform.addEventListener("change", (event) => { state.platform = event.target.value; render(); });
+  els.tabs.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-year]");
+    if (!button) return;
+    state.year = button.dataset.year;
+    render();
+  });
+  els.more.addEventListener("click", () => { state.limit += 24; render(false); });
+  els.cards.addEventListener("click", async (event) => {
+    const playButton = event.target.closest(".play-video");
+    if (playButton) {
+      openPlayer(playButton.dataset.videoId, playButton.dataset.videoTitle);
+      return;
+    }
+    const copyButton = event.target.closest(".copy");
+    if (!copyButton || !copyButton.dataset.link) return;
+    try {
+      await navigator.clipboard.writeText(copyButton.dataset.link);
+      copyButton.classList.add("done");
+      setTimeout(() => copyButton.classList.remove("done"), 1500);
+    } catch {
+      prompt("Copy this link:", copyButton.dataset.link);
+    }
+  });
+
+  function setView(view) {
+    state.view = view;
+    els.cards.classList.toggle("list-view", view === "list");
+    els.grid.classList.toggle("selected", view === "grid");
+    els.list.classList.toggle("selected", view === "list");
+  }
+
+  els.grid.addEventListener("click", () => setView("grid"));
+  els.list.addEventListener("click", () => setView("list"));
+  els.filterToggle.addEventListener("click", () => {
+    const closed = els.filterRow.classList.toggle("closed");
+    els.filterToggle.setAttribute("aria-expanded", String(!closed));
+    els.filterToggle.querySelector("b").textContent = closed ? "⌄" : "⌃";
+  });
+  $("#closePlayer").addEventListener("click", closePlayer);
+  els.dialog.addEventListener("click", (event) => { if (event.target === els.dialog) closePlayer(); });
+  els.dialog.addEventListener("close", () => {
+    els.player.src = "about:blank";
+    document.body.classList.remove("player-open");
+  });
+
+  document.documentElement.lang = "en";
+  updateStats();
+  buildTabs();
+  render(false);
 })();
