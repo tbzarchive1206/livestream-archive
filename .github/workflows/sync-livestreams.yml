@@ -64,7 +64,7 @@ jobs:
       - name: Prepare website
         run: |
           mkdir _site
-          cp index.html app.js styles.css _site/
+          cp index.html app.js styles.css icon.png _site/
           cp -r data _site/
           touch _site/.nojekyll
 
