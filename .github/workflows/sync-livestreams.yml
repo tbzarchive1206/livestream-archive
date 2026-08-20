@@ -31,20 +31,12 @@ jobs:
       - name: Download public Google Sheets workbook
         env:
           GOOGLE_SHEET_ID: 1GmZQa24xkS7cPjhWgwYOXGc4SxwR9Eev-eN6rlWRk90
-        run: |
-          python - <<'PY'
-          import os
-          import urllib.request
-          from pathlib import Path
-
-          sheet_id = os.environ["GOOGLE_SHEET_ID"]
-          url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=xlsx"
-          destination = Path(os.environ["RUNNER_TEMP"]) / "Livestreams.xlsx"
-          request = urllib.request.Request(url, headers={"User-Agent": "tbzarchive-github-sync/1.0"})
-          with urllib.request.urlopen(request, timeout=180) as response:
-              destination.write_bytes(response.read())
-          print(f"Downloaded {destination.stat().st_size:,} bytes")
-          PY
+        run: >-
+          python scripts/download_workbook.py
+          --sheet-id "$GOOGLE_SHEET_ID"
+          --destination "$RUNNER_TEMP/Livestreams.xlsx"
+          --attempts 5
+          --timeout 300
 
       - name: Generate archive data
         run: python scripts/update_livestreams.py --source "$RUNNER_TEMP/Livestreams.xlsx"
