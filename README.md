@@ -12,4 +12,8 @@ Workflow `.github/workflows/sync-livestreams.yml` codziennie:
 4. generuje `data/livestreams.js`;
 5. publikuje gotową stronę przez GitHub Pages.
 
+Pobieranie arkusza jest strumieniowane do pliku tymczasowego, sprawdzane jako
+poprawny XLSX i ponawiane do 5 razy w razie przerwanego połączenia. Dzięki temu
+niepełny eksport nie zostanie przekazany do generatora ani zapisany jako źródło.
+
 Nie edytuj ręcznie `data/livestreams.js`, ponieważ kolejne uruchomienie workflow zastąpi zmiany.
