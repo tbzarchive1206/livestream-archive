@@ -45,6 +45,35 @@
   const platforms = [...new Set(all.map((item) => item.platform).filter((platform) => platform && platform !== "Not specified"))].sort();
   const state = { query: "", year: String(latestYear), member: "all", platform: "all", limit: 24, view: "grid" };
 
+  // URL state belongs to the interface, not the generated spreadsheet data.
+  function readFiltersFromUrl() {
+    const params = new URL(window.location.href).searchParams;
+    const year = params.get("year");
+    const member = params.get("member") || "all";
+    const platform = params.get("platform") || "all";
+    state.year = year === "all" || years.some((value) => String(value) === year)
+      ? year : String(latestYear);
+    state.member = MEMBER_OPTIONS.find((option) => option.value.toLowerCase() === member.toLowerCase())?.value || "all";
+    state.platform = platforms.find((value) => value.toLowerCase() === platform.toLowerCase()) || "all";
+    state.query = (params.get("q") || "").trim();
+    els.search.value = state.query;
+    els.member.value = state.member;
+    els.platform.value = state.platform;
+  }
+
+  function writeFiltersToUrl(replace = false) {
+    const url = new URL(window.location.href);
+    // Keep the selected year explicit so shared links survive a new archive year.
+    url.searchParams.set("year", state.year);
+    for (const [key, value] of [["member", state.member], ["platform", state.platform], ["q", state.query]]) {
+      if (!value || value === "all" && key !== "q") url.searchParams.delete(key);
+      else url.searchParams.set(key, value);
+    }
+    if (url.href !== window.location.href) {
+      window.history[replace ? "replaceState" : "pushState"](null, "", url.href);
+    }
+  }
+
   function addOptions(select, values) {
     values.forEach((value) => select.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`));
   }
@@ -157,18 +186,28 @@
   }
 
   let searchTimer;
+  function commitFilters() {
+    clearTimeout(searchTimer);
+    // Include text still waiting for its debounce when another filter changes.
+    state.query = els.search.value.trim();
+    writeFiltersToUrl();
+    render();
+  }
   els.search.addEventListener("input", (event) => {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => { state.query = event.target.value.trim(); render(); }, 120);
+    searchTimer = setTimeout(commitFilters, 300);
   });
-  els.year.addEventListener("change", (event) => { state.year = event.target.value; render(); });
-  els.member.addEventListener("change", (event) => { state.member = event.target.value; render(); });
-  els.platform.addEventListener("change", (event) => { state.platform = event.target.value; render(); });
+  els.search.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") commitFilters();
+  });
+  els.year.addEventListener("change", (event) => { state.year = event.target.value; commitFilters(); });
+  els.member.addEventListener("change", (event) => { state.member = event.target.value; commitFilters(); });
+  els.platform.addEventListener("change", (event) => { state.platform = event.target.value; commitFilters(); });
   els.tabs.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-year]");
     if (!button) return;
     state.year = button.dataset.year;
-    render();
+    commitFilters();
   });
   els.more.addEventListener("click", () => { state.limit += 24; render(false); });
   els.cards.addEventListener("click", async (event) => {
@@ -210,6 +249,14 @@
   });
 
   document.documentElement.lang = "en";
+  readFiltersFromUrl();
+  writeFiltersToUrl(true);
+  window.addEventListener("popstate", () => {
+    clearTimeout(searchTimer);
+    if (els.dialog.open) closePlayer();
+    readFiltersFromUrl();
+    render();
+  });
   updateStats();
   buildTabs();
   render(false);
