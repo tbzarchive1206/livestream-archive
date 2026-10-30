@@ -38,3 +38,5 @@ body.player-open{overflow:hidden}
 .actions .watch.play-video{border:0;background:none;padding:0;color:var(--blue);font-weight:700;cursor:pointer}
 .actions .watch.play-video:hover{text-decoration:underline}
 @media(max-width:720px){.player-dialog{padding:0}.player-shell{border:0}.player-head{padding:14px 15px}.player-head h2{font-size:24px}.player-frame{flex:none;aspect-ratio:16/9;margin:auto 0}.player-dialog::after{content:"";flex:1}}
+
+.card.search-target{outline:3px solid var(--ink,#2536a6);outline-offset:3px}

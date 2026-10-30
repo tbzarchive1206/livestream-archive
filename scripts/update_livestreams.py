@@ -48,7 +48,7 @@ def iso_date(value,year):
 def choose_watch(ws,row,headers,title_col):
  preferred=[];fallback=[]
  for col,header in headers.items():
-  if "subtitle" in header or "english subs" in header or header=="thumbnail url":continue
+  if "subtitle" in header or "english subs" in header or header in {"thumbnail url","description","tags"}:continue
   url=cell_url(ws.cell(row,col))
   if not url or is_twitter(url):continue
   if header=="watch url":preferred.insert(0,url)
@@ -77,7 +77,9 @@ def build(source=SOURCE):
    if not thumbnail:
     video_id=youtube_id(watch)
     if video_id:thumbnail=f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
-   items.append({"id":f"{year}-{sequence:03d}","title":title,"members":members,"date":date_value,"year":year,"platform":platform,"watch":watch,"thumbnail":thumbnail})
+   items.append({"id":f"{year}-{sequence:03d}","title":title,"members":members,"date":date_value,"datePrecision":"day" if iso_date(ws.cell(row,date_col).value,0)!="0-01-01" else "year","year":year,"platform":platform,"watch":watch,"thumbnail":thumbnail,
+    "description":str(ws.cell(row,by_name["description"]).value or "").strip() if "description" in by_name else "",
+    "tags":str(ws.cell(row,by_name["tags"]).value or "").strip() if "tags" in by_name else ""})
  items.sort(key=lambda item:(item["date"],item["id"]),reverse=True)
  payload=json.dumps(items,ensure_ascii=False,indent=2).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
  DESTINATION.parent.mkdir(parents=True,exist_ok=True)

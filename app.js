@@ -159,12 +159,15 @@
   function card(item) {
     const videoId = youtubeId(item.watch);
     const image = item.thumbnail ? `<img src="${escapeHtml(item.thumbnail)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : "";
-    return `<article class="card">${thumbnailControl(item, videoId, image)}<div class="card-info"><span class="date">${dateLabel(item.date)}</span><h2>${escapeHtml(item.title)}</h2><div class="meta"><span>MEMBERS</span><b>${escapeHtml(item.members)}</b><span>PLATFORM</span><b>${escapeHtml(item.platform)}</b></div><div class="actions">${watchControl(item, videoId)}<button type="button" class="copy" data-link="${escapeHtml(item.watch || "")}">COPY LINK</button></div></div></article>`;
+    return `<article class="card${(item.watch || item.id) === new URLSearchParams(location.search).get("item") ? " search-target" : ""}">${thumbnailControl(item, videoId, image)}<div class="card-info"><span class="date">${dateLabel(item.date)}</span><h2>${escapeHtml(item.title)}</h2><div class="meta"><span>MEMBERS</span><b>${escapeHtml(item.members)}</b><span>PLATFORM</span><b>${escapeHtml(item.platform)}</b></div><div class="actions">${watchControl(item, videoId)}<button type="button" class="copy" data-link="${escapeHtml(item.watch || "")}">COPY LINK</button></div></div></article>`;
   }
 
   function render(reset = true) {
     if (reset) state.limit = 24;
-    const list = filtered();
+    let list = filtered();
+    const requested = new URLSearchParams(location.search).get("item");
+    const exact = requested && list.find(item => (item.watch || item.id) === requested);
+    if (exact) list = [exact, ...list.filter(item => item !== exact)];
     const shown = list.slice(0, state.limit);
     els.cards.innerHTML = shown.map(card).join("");
     els.empty.hidden = list.length !== 0;
@@ -174,9 +177,9 @@
     els.year.value = state.year;
   }
 
-  function openPlayer(videoId, title) {
+  function openPlayer(videoId, title, autoplay = true) {
     els.playerTitle.textContent = title || "LIVESTREAM";
-    els.player.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
+    els.player.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=${autoplay ? 1 : 0}&rel=0`;
     els.dialog.showModal();
     document.body.classList.add("player-open");
   }
@@ -260,4 +263,7 @@
   updateStats();
   buildTabs();
   render(false);
+  const requestedItem = new URLSearchParams(location.search).get("item");
+  const target = requestedItem && all.find(item => (item.watch || item.id) === requestedItem);
+  if (target && youtubeId(target.watch)) openPlayer(youtubeId(target.watch), target.title, false);
 })();
