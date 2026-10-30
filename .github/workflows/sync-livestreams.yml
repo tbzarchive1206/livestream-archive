@@ -53,10 +53,17 @@ jobs:
             git push
           fi
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Export shared search index
+        run: node scripts/export-search.mjs
+
       - name: Prepare website
         run: |
           mkdir _site
-          cp index.html app.js styles.css icon.png _site/
+          cp index.html app.js styles.css icon.png search-index.json _site/
           cp -r data _site/
           touch _site/.nojekyll
 
