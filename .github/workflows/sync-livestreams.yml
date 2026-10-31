@@ -63,7 +63,7 @@ jobs:
       - name: Prepare website
         run: |
           mkdir _site
-          cp index.html app.js styles.css icon.png search-index.json _site/
+          cp index.html app.js styles.css icon.png search-index.json tbz-mobile-nav.css tbz-mobile-nav.js _site/
           cp -r data _site/
           touch _site/.nojekyll
 
