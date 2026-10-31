@@ -40,3 +40,6 @@ body.player-open{overflow:hidden}
 @media(max-width:720px){.player-dialog{padding:0}.player-shell{border:0}.player-head{padding:14px 15px}.player-head h2{font-size:24px}.player-frame{flex:none;aspect-ratio:16/9;margin:auto 0}.player-dialog::after{content:"";flex:1}}
 
 .card.search-target{outline:3px solid var(--ink,#2536a6);outline-offset:3px}
+
+/* Responsive review v2 */
+@media(max-width:800px){.masthead h1{font-size:10.5vw;line-height:.9}.masthead h1 span{max-width:100%}}
